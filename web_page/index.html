@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Control Panel</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #121212;
+      color: #e0e0e0;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .card {
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      width: 300px;
+      min-height: 120px;
+      text-align: center;
+      position: relative;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode .card {
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      box-shadow: 0 2px 8px rgba(255, 255, 255, 0.1);
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .button-group {
+      margin-bottom: 15px;
+    }
+    .button-group button {
+      margin: 5px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .led-group {
+      margin-bottom: 10px;
+    }
+    .blue { background-color: #007bff; color: white; }
+    .red { background-color: #dc3545; color: white; }
+    .green { background-color: #28a745; color: white; }
+    .gray { background-color: #6c757d; color: white; }
+    .yellow { background-color: #ffc107; color: black; }
+    .orange { background-color: #fd7e14; color: white; }
+    .pink { background-color: #f8d7da; color: black; }
+    .slider-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="range"] {
+      width: 80%;
+    }
+    .toggle-switch {
+      display: inline-block;
+      width: 60px;
+      height: 30px;
+      background-color: #dc3545;
+      border-radius: 30px;
+      position: relative;
+      margin-top: 10px;
+      transition: background-color 0.3s;
+    }
+    .toggle-switch::after {
+      content: "";
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background-color: white;
+      border-radius: 50%;
+      top: 3px;
+      left: 3px;
+      transition: left 0.3s;
+    }
+    .toggle-switch.on {
+      background-color: #28a745;
+    }
+    .toggle-switch.on::after {
+      left: 33px;
+    }
+    .status-label {
+      margin-top: 5px;
+      font-weight: bold;
+    }
+    .gearbox-container {
+      margin-top: 15px;
+      background-color: black;
+      padding: 10px;
+      border-radius: 12px;
+      width: 70px;
+      margin-left: auto;
+      margin-right: auto;
+      position: relative;
+    }
+    .gearbox-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 18px;
+      color: white;
+    }
+    .gear {
+      color: white;
+      font-size: 20px;
+      margin: 8px 0;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+    .gear:hover {
+      background-color: #444;
+      border-radius: 5px;
+    }
+    .gear.active::before {
+      content: "▶";
+      color: red;
+      position: absolute;
+      left: -20px;
+      top: 0;
+    }
+    .mode-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      outline: none;
+      transition: transform 0.3s;
+    }
+    .mode-toggle:hover {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+
+<body>
+  <button class="mode-toggle" onclick="toggleDarkMode()" title="Toggle Dark Mode">🌙</button>
+
+<h1>Robot Control Panel</h1>
+
+<div class="dashboard">
+  <div class="card">
+    <h2>Vehicle Control</h2>
+    <div class="button-group">
+      <button class="green" onclick="startVehicle()">Start Vehicle</button>
+      <button class="red" onclick="stopVehicle()">Stop Vehicle</button>
+    </div>
+    <div id="vehicleSwitch" class="toggle-switch"></div>
+    <div class="status-label" id="vehicleStatus">Vehicle: OFF</div>
+    <div class="button-group">
+      <button class="blue" onclick="sendCommand('forward')">▲</button><br>
+      <button class="blue" onclick="sendCommand('left')">◀</button>
+      <button class="blue" onclick="sendCommand('stop')">■</button>
+      <button class="blue" onclick="sendCommand('right')">▶</button><br>
+      <button class="blue" onclick="sendCommand('backward')">▼</button>
+    </div>
+    <div class="gearbox-container">
+      <div class="gearbox-title">Gear</div>
+      <div id="gear1" class="gear" onclick="setGear(1)">1</div>
+      <div id="gear2" class="gear" onclick="setGear(2)">2</div>
+      <div id="gear3" class="gear" onclick="setGear(3)">3</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Headlight Control</h2>
+    <div class="button-group">
+      <button class="green" onclick="turnOnHeadlight()">Turn On</button>
+      <button class="gray" onclick="turnOffHeadlight()">Turn Off</button>
+    </div>
+    <div id="headlightSwitch" class="toggle-switch"></div>
+    <div class="status-label" id="headlightStatus">Headlight: OFF</div>
+    <div class="led-group">
+      <strong>Red</strong><br>
+      <button class="yellow" onclick="sendLED('red','low')">Low</button>
+      <button class="orange" onclick="sendLED('red','medium')">Medium</button>
+      <button class="pink" onclick="sendLED('red','high')">High</button>
+    </div>
+    <div class="led-group">
+      <strong>Green</strong><br>
+      <button class="yellow" onclick="sendLED('green','low')">Low</button>
+      <button class="orange" onclick="sendLED('green','medium')">Medium</button>
+      <button class="pink" onclick="sendLED('green','high')">High</button>
+    </div>
+    <div class="led-group">
+      <strong>Blue</strong><br>
+      <button class="yellow" onclick="sendLED('blue','low')">Low</button>
+      <button class="orange" onclick="sendLED('blue','medium')">Medium</button>
+      <button class="pink" onclick="sendLED('blue','high')">High</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Distance:</h2>
+    <p style="font-size: 24px; font-weight: bold;" id="distance">0 cm</p>
+  </div>
+
+  <div class="card">
+    <h2>Light Status:</h2>
+    <p style="font-size: 22px; font-weight: bold;" id="light">--</p>
+  </div>
+
+  <!-- YENİ EKLENEN Text to Speech KART -->
+  <div class="card">
+    <h2>Speak Text</h2>
+    <input type="text" id="speakInput" placeholder="Enter text" style="width: 80%; padding: 8px; margin-bottom: 10px;">
+    <button class="green" onclick="sendSpeak()">Speak</button>
+  </div>
+
+</div>
+
+<script>
+  let vehicleOn = false;
+  let headlightOn = false;
+  let currentGear = 1;
+  let darkMode = false;
+
+  function updateSwitches() {
+    const vehicleSwitch = document.getElementById("vehicleSwitch");
+    const headlightSwitch = document.getElementById("headlightSwitch");
+    const vehicleStatus = document.getElementById("vehicleStatus");
+    const headlightStatus = document.getElementById("headlightStatus");
+
+    if (vehicleOn) {
+      vehicleSwitch.classList.add("on");
+      vehicleStatus.innerText = "Vehicle: ON";
+    } else {
+      vehicleSwitch.classList.remove("on");
+      vehicleStatus.innerText = "Vehicle: OFF";
+    }
+
+    if (headlightOn) {
+      headlightSwitch.classList.add("on");
+      headlightStatus.innerText = "Headlight: ON";
+    } else {
+      headlightSwitch.classList.remove("on");
+      headlightStatus.innerText = "Headlight: OFF";
+    }
+  }
+
+  function setGear(gear) {
+    currentGear = gear;
+    document.getElementById("gear1").classList.remove("active");
+    document.getElementById("gear2").classList.remove("active");
+    document.getElementById("gear3").classList.remove("active");
+    document.getElementById(`gear${gear}`).classList.add("active");
+
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: `gear${gear}` })
+    });
+  }
+
+  function startVehicle() {
+    vehicleOn = true;
+    fetch("https://robot-api-57ew.onrender.com/set-vehicle-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicle_on: true })
+    });
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "led_ready" })
+    });
+    fetch("https://robot-api-57ew.onrender.com/set-command", {      // <<<< BURASI yeni
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "vehicle_startup" })
+    });
+    updateSwitches();
+}
+
+
+  function stopVehicle() {
+    vehicleOn = false;
+    headlightOn = false;
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "stop" })
+    });
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "led_black_low" })
+    });
+    fetch("https://robot-api-57ew.onrender.com/set-vehicle-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vehicle_on: false })
+    });
+    updateSwitches();
+  }
+
+  function turnOnHeadlight() {
+    if (!vehicleOn) {
+      return;
+    }
+    headlightOn = true;
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "led_ready" })
+    });
+    updateSwitches();
+  }
+
+  function turnOffHeadlight() {
+    headlightOn = false;
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: "led_black_low" })
+    });
+    updateSwitches();
+  }
+
+  function sendCommand(cmd) {
+    if (!vehicleOn) return;
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: cmd })
+    });
+  }
+
+  function sendLED(color, level) {
+    if (!vehicleOn || !headlightOn) return;
+    fetch("https://robot-api-57ew.onrender.com/set-command", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: `led_${color}_${level}` })
+    });
+  }
+
+  function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.body.classList.toggle("dark-mode");
+    const button = document.querySelector('.mode-toggle');
+    button.textContent = darkMode ? "☀️" : "🌙";
+  }
+
+  function sendSpeak() {
+    const text = document.getElementById("speakInput").value;
+    if (!text.trim()) {
+      alert("Please enter a text to speak!");
+      return;
+    }
+    fetch("https://robot-api-57ew.onrender.com/set-speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text })
+    }).then(response => {
+      if (response.ok) {
+        console.log("Text sent successfully.");
+      } else {
+        console.log("Failed to send text.");
+      }
+    }).catch(error => {
+      console.log("Error sending text:", error);
+    });
+  }
+
+  setInterval(() => {
+    fetch("https://robot-api-57ew.onrender.com/status", { cache: "no-store" })
+      .then(res => res.json())
+      .then(data => {
+        const distance = data.distance || 0;
+        const distanceElement = document.getElementById("distance");
+
+        if (distance > 0 && distance < 30) {
+          distanceElement.innerHTML = `⚠️ Çarpışma İhtimali Var! ⚠️<br>(Mesafe: ${distance} cm)`;
+          distanceElement.style.color = "red";
+          distanceElement.style.fontSize = "22px";
+        } else {
+          distanceElement.innerText = distance + " cm";
+          distanceElement.style.color = "black";
+          distanceElement.style.fontSize = "24px";
+        }
+
+        document.getElementById("light").innerText = data.light || "--";
+      });
+  }, 1000);
+
+</script>
+
+</body>
+</html>
